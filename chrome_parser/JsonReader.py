@@ -69,5 +69,5 @@ class JsonReader:
         extracted = re.findall("^[^?]+", url)
         return extracted[0]
 
-    def get_start_time(self):
+    def get_start_datetime(self):
         return self.json_data["pages"][0]["startedDateTime"]
