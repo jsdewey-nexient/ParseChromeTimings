@@ -1,7 +1,7 @@
 # Wrapper for the Python-Excel library (xlwt).
 
 import xlwt
-from sys import exit
+from time import strptime
 
 class ExcelWriter:
     workbook = False
@@ -40,9 +40,10 @@ class ExcelWriter:
             row_number,
             cell_number,
             content,
-            style=''
+            style='',
+            num_format=''
     ):
-        style_object = xlwt.easyxf(style)
+        style_object = xlwt.easyxf(style, num_format)
         self.sheets[sheet_number].write(
             row_number,
             cell_number,
@@ -50,14 +51,28 @@ class ExcelWriter:
             style_object
         )
 
-    def write_row(self, sheet_number, row_number, content, style):
-        for c in content:
-            for info, i in c, range(0, len(info)):
-                self.write_cell(sheet_number, row_number, i, info)
+    def write_entry_chrome(self, sheet_number, entry, row_number=0):
+        timings = entry["timings"]
+        num_style = "0.000"
+        self.write_cell(sheet_number, row_number, 0, entry["url"], "font: bold on")
+
+        for key, cell in list(zip(timings, range(1, len(timings) + 1))):
+            self.write_cell(
+                sheet_number,
+                row_number,
+                cell,
+                float(timings[key]),
+                '',
+                num_style
+            )
+
+        self.write_cell(sheet_number, row_number, 8, entry["total"], '', num_style)
+
+        return row_number + 1
 
     def create_header_row(self, sheet_number, headers, row_number=0):
         number_of_headers = len(headers)
-        for i, header in range(0, number_of_headers), headers:
+        for i, header in list(zip(range(0, number_of_headers), headers)):
             self.write_cell(
                 sheet_number,
                 row_number,
@@ -65,7 +80,51 @@ class ExcelWriter:
                 header,
                 'font: bold on; font: underline on; alignment: horiz center'
             )
+        return row_number + 1
 
     def create_date_row(self, sheet_number, date, row_number=0):
-        self.write_cell(sheet_number, row_number, 0, "DATE:", "font: bold on")
-        self.write_cell(sheet_number, row_number, 1, date)
+        split_date = str.split(date, ".")
+        date_struct = strptime(split_date[0], "%Y-%m-%dT%H:%M:%S")
+        new_date = "{0}/{1}/{2} at {3}:{4}:{5}".format(
+            date_struct[1],
+            date_struct[2],
+            date_struct[0],
+            date_struct[3],
+            date_struct[4],
+            date_struct[5]
+        )
+        self.write_cell(sheet_number, row_number, 0, "DATE:", "font: bold on; align: horiz right")
+        self.write_cell(sheet_number, row_number, 1, new_date)
+        return row_number + 1
+
+    def create_timings_row(self, sheet_number, url, timing_dictionary, row_number=0):
+        style = "font: bold on; align: horiz right"
+        num_style = "0.000"
+
+        self.write_cell(sheet_number, row_number, 0, "URL:", style)
+        self.write_cell(sheet_number, row_number, 1, url)
+        row_number += 1
+
+        self.write_cell(sheet_number, row_number, 0, "Content Load (ms):", style)
+        self.write_cell(
+            sheet_number,
+            row_number,
+            1,
+            timing_dictionary["onContentLoad"],
+            '',
+            num_style
+        )
+        row_number += 1
+
+        self.write_cell(sheet_number, row_number, 0, "Load (ms):", style)
+        self.write_cell(
+            sheet_number,
+            row_number,
+            1,
+            timing_dictionary["onLoad"],
+            '',
+            num_style
+        )
+        row_number += 2
+
+        return row_number

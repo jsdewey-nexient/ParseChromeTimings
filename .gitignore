@@ -1,2 +1,6 @@
 .idea/
 *.iml
+chrome_parser/__pycache__/
+excel_writer/__pycache__/
+*.har
+*.xls
