@@ -5,7 +5,7 @@ from excel_writer.ExcelWriter import ExcelWriter
 import re
 
 # Browser-Agnostic Settings
-EXCEL_FILE_NAME = "Github.xls"
+EXCEL_FILE_NAME = "Github.xlsx"
 
 # Google Chrome Settings
 HAR_FILE_PATH = "./github.com.har"

@@ -1,11 +1,11 @@
 # Wrapper for the Python-Excel library (xlwt).
 
-import xlwt
+import xlsxwriter
 from time import strptime
 
 class ExcelWriter:
     workbook = False
-    workbook_name = 'NewWorkBook.xls'
+    workbook_name = 'NewWorkBook.xlsx'
     sheets = []
 
     def __init__(self, workbook_name=False, first_sheet_name=False):
@@ -19,13 +19,13 @@ class ExcelWriter:
             self.create_sheet(default_sheet_name)
 
     def create_workbook(self):
-        self.workbook = xlwt.Workbook()
+        self.workbook = xlsxwriter.Workbook(self.workbook_name)
 
     def save_workbook(self):
-        self.workbook.save(self.workbook_name)
+        self.workbook.close()
 
     def create_sheet(self, sheet_name):
-        sheet = self.workbook.add_sheet(sheet_name)
+        sheet = self.workbook.add_worksheet(sheet_name)
         self.sheets.append(sheet)
 
     def get_default_sheet_name(self):
@@ -40,10 +40,11 @@ class ExcelWriter:
             row_number,
             cell_number,
             content,
-            style='',
+            style={},
             num_format=''
     ):
-        style_object = xlwt.easyxf(style, num_format)
+        style_object = self.workbook.add_format(style)
+        style_object.set_num_format(num_format)
         self.sheets[sheet_number].write(
             row_number,
             cell_number,
@@ -54,7 +55,8 @@ class ExcelWriter:
     def write_entry_chrome(self, sheet_number, entry, row_number=0):
         timings = entry["timings"]
         num_style = "0.000"
-        self.write_cell(sheet_number, row_number, 0, entry["url"], "font: bold on")
+        styling = {"bold": True}
+        self.write_cell(sheet_number, row_number, 0, entry["url"], styling)
 
         for key, cell in list(zip(timings, range(1, len(timings) + 1))):
             self.write_cell(
@@ -62,11 +64,11 @@ class ExcelWriter:
                 row_number,
                 cell,
                 float(timings[key]),
-                '',
+                styling,
                 num_style
             )
 
-        self.write_cell(sheet_number, row_number, 8, entry["total"], '', num_style)
+        self.write_cell(sheet_number, row_number, 8, entry["total"], {}, num_style)
 
         return row_number + 1
 
@@ -78,11 +80,12 @@ class ExcelWriter:
                 row_number,
                 i,
                 header,
-                'font: bold on; font: underline on; alignment: horiz center'
+                {"bold": True, "underline": True, "align": "center"}
             )
         return row_number + 1
 
     def create_date_row(self, sheet_number, date, row_number=0):
+        style = {"bold": True, "align": "right"}
         split_date = str.split(date, ".")
         date_struct = strptime(split_date[0], "%Y-%m-%dT%H:%M:%S")
         new_date = "{0}/{1}/{2} at {3}:{4}:{5}".format(
@@ -93,12 +96,12 @@ class ExcelWriter:
             date_struct[4],
             date_struct[5]
         )
-        self.write_cell(sheet_number, row_number, 0, "DATE:", "font: bold on; align: horiz right")
+        self.write_cell(sheet_number, row_number, 0, "DATE:", style)
         self.write_cell(sheet_number, row_number, 1, new_date)
         return row_number + 1
 
     def create_timings_row(self, sheet_number, url, timing_dictionary, row_number=0):
-        style = "font: bold on; align: horiz right"
+        style = {"bold": True, "align": "right"}
         num_style = "0.000"
 
         self.write_cell(sheet_number, row_number, 0, "URL:", style)
@@ -111,7 +114,7 @@ class ExcelWriter:
             row_number,
             1,
             timing_dictionary["onContentLoad"],
-            '',
+            {},
             num_style
         )
         row_number += 1
@@ -122,7 +125,7 @@ class ExcelWriter:
             row_number,
             1,
             timing_dictionary["onLoad"],
-            '',
+            {},
             num_style
         )
         row_number += 2
