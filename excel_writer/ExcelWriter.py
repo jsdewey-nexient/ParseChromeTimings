@@ -64,7 +64,7 @@ class ExcelWriter:
                 row_number,
                 cell,
                 float(timings[key]),
-                styling,
+                {},
                 num_style
             )
 
